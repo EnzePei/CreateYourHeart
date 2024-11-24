@@ -18,8 +18,11 @@
       left: 10px;
       z-index: 10;
       background: rgba(0, 0, 0, 0.5);
-      padding: 10px;
+      padding: 15px;
       border-radius: 8px;
+      max-width: 90%;
+      overflow-x: hidden;
+      box-sizing: border-box;
     }
     .slider {
       margin: 10px 0;
@@ -27,6 +30,12 @@
     label {
       display: block;
       margin-bottom: 5px;
+    }
+    input[type="range"] {
+      width: 100%;
+    }
+    input[type="color"] {
+      width: 50%;
     }
   </style>
 </head>
@@ -60,9 +69,13 @@
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
-    // Resize canvas
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Resize canvas to fit the screen
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
     // Sliders
     const particleCountSlider = document.getElementById('particleCount');
@@ -72,6 +85,23 @@
     const color2Picker = document.getElementById('color2');
 
     const particles = [];
+
+    // Determine device type and set initial heart size range accordingly
+    function setHeartSizeRange() {
+      const isMobile = window.innerWidth <= 768; // Mobile devices have width <= 768px
+
+      if (isMobile) {
+        heartSizeSlider.value = 30;
+        heartSizeSlider.min = 10;
+        heartSizeSlider.max = 50;
+      } else {
+        heartSizeSlider.value = 50;
+        heartSizeSlider.min = 20;
+        heartSizeSlider.max = 100;
+      }
+    }
+    setHeartSizeRange();
+    window.addEventListener('resize', setHeartSizeRange);
 
     class Particle {
       constructor(x, y, size, color1, color2, velocity, lifetime) {
