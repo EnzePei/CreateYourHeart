@@ -21,8 +21,7 @@
       padding: 15px;
       border-radius: 8px;
       max-width: 90%;
-      overflow-x: hidden;
-      box-sizing: border-box;
+      overflow: hidden;
     }
     .slider {
       margin: 10px 0;
@@ -37,6 +36,52 @@
     input[type="color"] {
       width: 50%;
     }
+    #footer {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      z-index: 10;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 10px;
+    }
+    #footer a {
+      color: white;
+      font-size: 16px;
+      text-decoration: none;
+      border: 1px solid white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+    #footer a:hover {
+      background-color: white;
+      color: black;
+    }
+    #exportBtn {
+      padding: 10px 20px;
+      background-color: white;
+      color: black;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    #exportBtn:hover {
+      background-color: #f0f0f0;
+    }
+    @media (max-width: 768px) {
+      #footer {
+        flex-direction: column;
+        align-items: center;
+      }
+      #footer a, #exportBtn {
+        font-size: 14px;
+        padding: 10px 15px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -49,7 +94,7 @@
     </div>
     <div class="slider">
       <label for="heartSize">Heart Size</label>
-      <input id="heartSize" type="range" min="10" max="40" value="20">
+      <input id="heartSize" type="range" min="5" max="30" value="15">
     </div>
     <div class="slider">
       <label for="velocity">Velocity</label>
@@ -65,6 +110,11 @@
     </div>
   </div>
 
+  <div id="footer">
+    <button id="exportBtn">Download Heart</button>
+    <a href="https://enzepei.github.io/" target="_blank" rel="noopener noreferrer">Created by Enzo</a>
+  </div>
+
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
@@ -77,27 +127,26 @@
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // Sliders
     const particleCountSlider = document.getElementById('particleCount');
     const heartSizeSlider = document.getElementById('heartSize');
     const velocitySlider = document.getElementById('velocity');
     const color1Picker = document.getElementById('color1');
     const color2Picker = document.getElementById('color2');
+    const exportBtn = document.getElementById('exportBtn');
 
     const particles = [];
 
-    // Determine device type and set initial heart size range accordingly
     function setHeartSizeRange() {
-      const isMobile = window.innerWidth <= 768; // Mobile devices have width <= 768px
+      const isMobile = window.innerWidth <= 768;
 
       if (isMobile) {
-        heartSizeSlider.value = 30;
+        heartSizeSlider.value = 15;
+        heartSizeSlider.min = 5;
+        heartSizeSlider.max = 30;
+      } else {
+        heartSizeSlider.value = 15;
         heartSizeSlider.min = 10;
         heartSizeSlider.max = 50;
-      } else {
-        heartSizeSlider.value = 50;
-        heartSizeSlider.min = 20;
-        heartSizeSlider.max = 100;
       }
     }
     setHeartSizeRange();
@@ -107,7 +156,7 @@
       constructor(x, y, size, color1, color2, velocity, lifetime) {
         this.x = x;
         this.y = y;
-        this.size = Math.max(size, 0); // Ensure size is not negative
+        this.size = Math.max(size, 0);
         this.color1 = color1;
         this.color2 = color2;
         this.velocity = velocity;
@@ -118,7 +167,7 @@
       move() {
         this.x += this.velocity.x;
         this.y += this.velocity.y;
-        this.size = Math.max(this.size - 0.1, 0); // Decrease size but never below 0
+        this.size = Math.max(this.size - 0.1, 0);
         this.age++;
       }
 
@@ -130,12 +179,12 @@
         return `rgb(${r}, ${g}, ${b})`;
       }
 
-      draw() {
+      draw(context) {
         if (this.size > 0) {
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-          ctx.fillStyle = this.blendColor();
-          ctx.fill();
+          context.beginPath();
+          context.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          context.fillStyle = this.blendColor();
+          context.fill();
         }
       }
     }
@@ -182,20 +231,27 @@
 
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       addParticles();
 
       for (let i = particles.length - 1; i >= 0; i--) {
         const particle = particles[i];
         particle.move();
-        particle.draw();
+        particle.draw(ctx);
         if (particle.size <= 0) {
-          particles.splice(i, 1); // Remove particles with zero or negative size
+          particles.splice(i, 1);
         }
       }
-
       requestAnimationFrame(animate);
     }
+
+    exportBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'heart_with_background.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    });
 
     animate();
   </script>
