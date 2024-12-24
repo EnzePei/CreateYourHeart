@@ -20,8 +20,6 @@
       background: rgba(0, 0, 0, 0.5);
       padding: 15px;
       border-radius: 8px;
-      max-width: 90%;
-      overflow: hidden;
     }
     .slider {
       margin: 10px 0;
@@ -43,10 +41,10 @@
       z-index: 10;
       display: flex;
       flex-direction: row;
-      align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
     }
-    #footer a {
+    #footer a, #footer button {
       color: white;
       font-size: 16px;
       text-decoration: none;
@@ -54,32 +52,72 @@
       padding: 5px 10px;
       border-radius: 5px;
       transition: background-color 0.3s ease;
-    }
-    #footer a:hover {
-      background-color: white;
-      color: black;
-    }
-    #exportBtn {
-      padding: 10px 20px;
-      background-color: white;
-      color: black;
-      border: none;
-      border-radius: 5px;
+      background: none;
       cursor: pointer;
-      font-size: 14px;
-      font-weight: bold;
     }
-    #exportBtn:hover {
-      background-color: #f0f0f0;
+    #footer a:hover, #footer button:hover {
+      background-color: white;
+      color: black;
     }
     @media (max-width: 768px) {
-      #footer {
-        flex-direction: column;
-        align-items: center;
+      #controls {
+        position: fixed;
+        top: auto;
+        bottom: 70px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 85%;
+        max-width: 280px;
+        padding: 8px;
+        background: rgba(0, 0, 0, 0.7);
       }
-      #footer a, #exportBtn {
-        font-size: 14px;
-        padding: 10px 15px;
+      .slider {
+        margin: 3px 0;
+      }
+      label {
+        font-size: 11px;
+        margin-bottom: 2px;
+      }
+      input[type="range"] {
+        height: 15px;
+        -webkit-appearance: none;
+        appearance: none;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 7px;
+        margin: 3px 0;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 15px;
+        height: 15px;
+        background: white;
+        border-radius: 50%;
+      }
+      input[type="color"] {
+        width: 40%;
+        height: 20px;
+      }
+      #footer {
+        position: fixed;
+        bottom: 15px;
+        right: 50%;
+        transform: translateX(50%);
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        gap: 8px;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 8px;
+        border-radius: 5px;
+        width: 85%;
+        max-width: 280px;
+      }
+      #footer a, #footer button {
+        font-size: 11px;
+        padding: 4px 8px;
+        flex: 1;
+        text-align: center;
+        min-width: 0;
       }
     }
   </style>
@@ -113,16 +151,21 @@
   <div id="footer">
     <button id="exportBtn">Download Heart</button>
     <a href="https://enzepei.github.io/" target="_blank" rel="noopener noreferrer">Created by Enzo</a>
+    <!-- <a href="https://www.paypal.com/donate?hosted_button_id=YOUR_BUTTON_ID" target="_blank" rel="noopener noreferrer">Tip Me ❤️</a> -->
+    <a href="log.html" target="_blank" rel="noopener noreferrer">View Logs</a>
   </div>
 
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
-    // Resize canvas to fit the screen
     function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      ctx.scale(dpr, dpr);
     }
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
@@ -138,15 +181,14 @@
 
     function setHeartSizeRange() {
       const isMobile = window.innerWidth <= 768;
-
       if (isMobile) {
+        heartSizeSlider.value = 8;
+        heartSizeSlider.min = 3;
+        heartSizeSlider.max = 15;
+      } else {
         heartSizeSlider.value = 15;
         heartSizeSlider.min = 5;
         heartSizeSlider.max = 30;
-      } else {
-        heartSizeSlider.value = 15;
-        heartSizeSlider.min = 10;
-        heartSizeSlider.max = 50;
       }
     }
     setHeartSizeRange();
@@ -156,7 +198,7 @@
       constructor(x, y, size, color1, color2, velocity, lifetime) {
         this.x = x;
         this.y = y;
-        this.size = Math.max(size, 0);
+        this.size = size;
         this.color1 = color1;
         this.color2 = color2;
         this.velocity = velocity;
@@ -198,11 +240,7 @@
 
     function heartShape(t, scale) {
       const x = 16 * Math.pow(Math.sin(t), 3);
-      const y =
-        13 * Math.cos(t) -
-        5 * Math.cos(2 * t) -
-        2 * Math.cos(3 * t) -
-        Math.cos(4 * t);
+      const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
       return { x: x * scale, y: -y * scale };
     }
 
@@ -216,8 +254,8 @@
       for (let i = 0; i < particleCount; i++) {
         const t = Math.random() * Math.PI * 2;
         const { x: hx, y: hy } = heartShape(t, heartSize);
-        const x = canvas.width / 2 + hx;
-        const y = canvas.height / 2 + hy;
+        const x = window.innerWidth / 2 + hx;
+        const y = window.innerHeight / 2 + hy;
         const size = Math.random() * 3 + 3;
         const velocity = {
           x: (Math.random() - 0.5) * velocityScale,
@@ -230,9 +268,10 @@
     }
 
     function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const dpr = window.devicePixelRatio || 1;
+      ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
       ctx.fillStyle = 'black';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
       addParticles();
 
       for (let i = particles.length - 1; i >= 0; i--) {
@@ -247,10 +286,33 @@
     }
 
     exportBtn.addEventListener('click', () => {
-      const link = document.createElement('a');
-      link.download = 'heart_with_background.png';
-      link.href = canvas.toDataURL();
-      link.click();
+      // Create a temporary canvas with current size
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = canvas.height;
+      
+      // Draw black background
+      tempCtx.fillStyle = 'black';
+      tempCtx.fillRect(0, 0, tempCanvas.width / dpr, tempCanvas.height / dpr);
+      
+      // Draw the current canvas content
+      tempCtx.drawImage(canvas, 0, 0);
+      
+      // Convert to data URL and trigger download
+      try {
+        const dataUrl = tempCanvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = 'heart.png';
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (error) {
+        console.error('Error exporting image:', error);
+      }
     });
 
     animate();
