@@ -152,8 +152,7 @@
   <div id="footer">
     <button id="exportBtn">Download Heart</button>
     <a href="https://enzepei.github.io/" target="_blank" rel="noopener noreferrer">Created by Enzo</a>
-    <!-- <a href="https://www.paypal.com/donate?hosted_button_id=YOUR_BUTTON_ID" target="_blank" rel="noopener noreferrer">Tip Me ❤️</a> -->
-    <a href="update_log.html" rel="noopener noreferrer">View Logs</a>
+    <a href="log.html" rel="noopener noreferrer">View Logs</a>
   </div>
 
   <script>
@@ -252,11 +251,15 @@
       const color1 = parseColor(color1Picker.value);
       const color2 = parseColor(color2Picker.value);
 
+      // Adjust vertical center position on mobile devices
+      const isMobile = window.innerWidth <= 768;
+      const centerY = isMobile ? window.innerHeight / 2 - 80 : window.innerHeight / 2;
+
       for (let i = 0; i < particleCount; i++) {
         const t = Math.random() * Math.PI * 2;
         const { x: hx, y: hy } = heartShape(t, heartSize);
         const x = window.innerWidth / 2 + hx;
-        const y = window.innerHeight / 2 + hy;
+        const y = centerY + hy; // Adjust the vertical position
         const size = Math.random() * 3 + 3;
         const velocity = {
           x: (Math.random() - 0.5) * velocityScale,
