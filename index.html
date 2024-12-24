@@ -152,12 +152,29 @@
   <div id="footer">
     <button id="exportBtn">Download Heart</button>
     <a href="https://enzepei.github.io/" target="_blank" rel="noopener noreferrer">Created by Enzo</a>
-    <a href="update_log.html" rel="noopener noreferrer">View Logs</a>
+    <a href="log.html" rel="noopener noreferrer">View Logs</a>
+    <button id="enjoyBtn">Take a Rest!</button> <!-- "Take a Rest!" button -->
   </div>
 
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
+    const enjoyBtn = document.getElementById('enjoyBtn');
+    const controls = document.getElementById('controls');
+    const footer = document.getElementById('footer');
+    const particleCountSlider = document.getElementById('particleCount');
+    const heartSizeSlider = document.getElementById('heartSize');
+    const velocitySlider = document.getElementById('velocity');
+    const color1Picker = document.getElementById('color1');
+    const color2Picker = document.getElementById('color2');
+    const exportBtn = document.getElementById('exportBtn');
+
+    let isEnjoyMode = false;
+    let targetColor1 = { r: Math.random() * 255, g: Math.random() * 255, b: Math.random() * 255 };
+    let targetColor2 = { r: Math.random() * 255, g: Math.random() * 255, b: Math.random() * 255 };
+    let currentColor1 = { ...targetColor1 };
+    let currentColor2 = { ...targetColor2 };
+    const particles = [];
 
     function resizeCanvas() {
       const dpr = window.devicePixelRatio || 1;
@@ -169,15 +186,6 @@
     }
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
-
-    const particleCountSlider = document.getElementById('particleCount');
-    const heartSizeSlider = document.getElementById('heartSize');
-    const velocitySlider = document.getElementById('velocity');
-    const color1Picker = document.getElementById('color1');
-    const color2Picker = document.getElementById('color2');
-    const exportBtn = document.getElementById('exportBtn');
-
-    const particles = [];
 
     function setHeartSizeRange() {
       const isMobile = window.innerWidth <= 768;
@@ -193,6 +201,48 @@
     }
     setHeartSizeRange();
     window.addEventListener('resize', setHeartSizeRange);
+
+
+    function parseColor(hex) {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return { r, g, b };
+    }
+
+    function heartShape(t, scale) {
+      const x = 16 * Math.pow(Math.sin(t), 3);
+      const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+      return { x: x * scale, y: -y * scale };
+    }
+
+    function addParticles() {
+      const particleCount = parseInt(particleCountSlider.value);
+      const heartSize = parseInt(heartSizeSlider.value);
+      const velocityScale = parseFloat(velocitySlider.value);
+
+      // Use currentColor1 and currentColor2 for Enjoy Mode
+      let color1 = isEnjoyMode ? currentColor1 : parseColor(color1Picker.value);
+      let color2 = isEnjoyMode ? currentColor2 : parseColor(color2Picker.value);
+
+      const isMobile = window.innerWidth <= 768;
+      const centerY = isMobile ? window.innerHeight / 2 - 80 : window.innerHeight / 2;
+
+      for (let i = 0; i < particleCount; i++) {
+        const t = Math.random() * Math.PI * 2;
+        const { x: hx, y: hy } = heartShape(t, heartSize);
+        const x = window.innerWidth / 2 + hx;
+        const y = centerY + hy;
+        const size = Math.random() * 3 + 3;
+        const velocity = {
+          x: (Math.random() - 0.5) * velocityScale,
+          y: (Math.random() - 0.5) * velocityScale,
+        };
+        const lifetime = Math.random() * 60 + 40;
+
+        particles.push(new Particle(x, y, size, color1, color2, velocity, lifetime));
+      }
+    }
 
     class Particle {
       constructor(x, y, size, color1, color2, velocity, lifetime) {
@@ -215,10 +265,9 @@
 
       blendColor() {
         const ratio = Math.min(this.age / this.lifetime, 1);
-        const r = Math.floor(this.color1.r * (1 - ratio) + this.color2.r * ratio);
-        const g = Math.floor(this.color1.g * (1 - ratio) + this.color2.g * ratio);
-        const b = Math.floor(this.color1.b * (1 - ratio) + this.color2.b * ratio);
-        return `rgb(${r}, ${g}, ${b})`;
+        const color1 = interpolateColor(this.color1, this.color2, ratio);
+        const color2 = interpolateColor(this.color2, this.color1, ratio);
+        return `rgb(${color1.r}, ${color1.g}, ${color1.b})`;
       }
 
       draw(context) {
@@ -231,44 +280,11 @@
       }
     }
 
-    function parseColor(hex) {
-      const r = parseInt(hex.slice(1, 3), 16);
-      const g = parseInt(hex.slice(3, 5), 16);
-      const b = parseInt(hex.slice(5, 7), 16);
+    function interpolateColor(startColor, endColor, ratio) {
+      const r = Math.floor(startColor.r * (1 - ratio) + endColor.r * ratio);
+      const g = Math.floor(startColor.g * (1 - ratio) + endColor.g * ratio);
+      const b = Math.floor(startColor.b * (1 - ratio) + endColor.b * ratio);
       return { r, g, b };
-    }
-
-    function heartShape(t, scale) {
-      const x = 16 * Math.pow(Math.sin(t), 3);
-      const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
-      return { x: x * scale, y: -y * scale };
-    }
-
-    function addParticles() {
-      const particleCount = parseInt(particleCountSlider.value);
-      const heartSize = parseInt(heartSizeSlider.value);
-      const velocityScale = parseFloat(velocitySlider.value);
-      const color1 = parseColor(color1Picker.value);
-      const color2 = parseColor(color2Picker.value);
-
-      // Adjust vertical center position on mobile devices
-      const isMobile = window.innerWidth <= 768;
-      const centerY = isMobile ? window.innerHeight / 2 - 80 : window.innerHeight / 2;
-
-      for (let i = 0; i < particleCount; i++) {
-        const t = Math.random() * Math.PI * 2;
-        const { x: hx, y: hy } = heartShape(t, heartSize);
-        const x = window.innerWidth / 2 + hx;
-        const y = centerY + hy; // Adjust the vertical position
-        const size = Math.random() * 3 + 3;
-        const velocity = {
-          x: (Math.random() - 0.5) * velocityScale,
-          y: (Math.random() - 0.5) * velocityScale,
-        };
-        const lifetime = Math.random() * 60 + 40;
-
-        particles.push(new Particle(x, y, size, color1, color2, velocity, lifetime));
-      }
     }
 
     function animate() {
@@ -276,6 +292,7 @@
       ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
       ctx.fillStyle = 'black';
       ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+
       addParticles();
 
       for (let i = particles.length - 1; i >= 0; i--) {
@@ -286,8 +303,36 @@
           particles.splice(i, 1);
         }
       }
+
+      if (isEnjoyMode) {
+        // Smooth color change over time
+        const transitionSpeed = 0.02; // Color transition speed (lower value = slower transition)
+        currentColor1 = interpolateColor(currentColor1, targetColor1, transitionSpeed);
+        currentColor2 = interpolateColor(currentColor2, targetColor2, transitionSpeed);
+
+        // After a certain time, pick new random colors
+        if (Math.random() < 0.01) {
+          targetColor1 = { r: Math.random() * 255, g: Math.random() * 255, b: Math.random() * 255 };
+          targetColor2 = { r: Math.random() * 255, g: Math.random() * 255, b: Math.random() * 255 };
+        }
+      }
+
       requestAnimationFrame(animate);
     }
+
+    enjoyBtn.addEventListener('click', () => {
+      controls.style.display = 'none';
+      footer.style.display = 'none';
+      isEnjoyMode = true;
+    });
+
+    canvas.addEventListener('click', () => {
+      if (isEnjoyMode) {
+        controls.style.display = 'block';
+        footer.style.display = 'flex';
+        isEnjoyMode = false;
+      }
+    });
 
     exportBtn.addEventListener('click', () => {
       // Create a temporary canvas with current size
