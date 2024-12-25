@@ -8,8 +8,14 @@
     body {
         margin: 0;
         font-family: Arial, sans-serif;
-        background-color: black;
+        background-color: black; /* Keep original black background */
         color: white;
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.beige-theme {
+        background-color: #f5f5dc;
+        color: #2d2d2d;
     }
 
     header {
@@ -32,7 +38,7 @@
         margin: 0 auto;
         position: relative;
         z-index: 10;
-        margin-bottom: 50px; /* Add space before footer */
+        margin-bottom: 50px;
     }
 
     .log-entry {
@@ -40,12 +46,21 @@
         padding: 15px;
         border-radius: 8px;
         background: rgba(255, 255, 255, 0.1);
-        transition: transform 0.3s, box-shadow 0.3s;
+        transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s;
+    }
+
+    .beige-theme .log-entry {
+        background: rgba(45, 45, 45, 0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .log-entry:hover {
         transform: translateY(-5px);
         box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+    }
+
+    .beige-theme .log-entry:hover {
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     }
 
     .log-date {
@@ -60,16 +75,13 @@
         line-height: 1.5;
     }
 
-    /* Center the footer link */
     footer {
         display: flex;
-        justify-content: center; /* Center horizontally */
-        align-items: center; /* Center vertically */
-        margin-top: 0; /* Remove margin top */
-        color: white;
+        justify-content: center;
+        align-items: center;
         padding: 15px 20px;
         z-index: 20;
-        }
+    }
 
     footer a {
         color: white;
@@ -77,13 +89,23 @@
         border: 1px solid white;
         padding: 10px 20px;
         border-radius: 5px;
-        transition: background-color 0.3s ease;
+        transition: background-color 0.3s ease, color 0.3s, border-color 0.3s;
         cursor: pointer;
+    }
+
+    .beige-theme footer a {
+        color: #2d2d2d;
+        border-color: #2d2d2d;
     }
 
     footer a:hover {
         background-color: white;
         color: black;
+    }
+
+    .beige-theme footer a:hover {
+        background-color: #2d2d2d;
+        color: #f5f5dc;
     }
 
     #bgCanvas {
@@ -93,13 +115,35 @@
         width: 100%;
         height: 100%;
         z-index: 1;
-        pointer-events: none; /* Allow clicks to pass through the canvas */
+        pointer-events: none;
     }
 
     html, body {
         height: 100%;
     }
 
+    @media (max-width: 768px) {
+        .log-container {
+            padding: 10px;
+        }
+        
+        .log-entry {
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+
+        header h1 {
+            font-size: 2em;
+        }
+
+        .log-date {
+            font-size: 1em;
+        }
+
+        .log-details {
+            font-size: 0.9em;
+        }
+    }
   </style>
 </head>
 <body>
@@ -117,7 +161,7 @@
     <div class="log-entry">
         <div class="log-date">December 24, 2024</div>
         <div class="log-details">Christmas Eve Update!  Added Rest Mode: Hiding all the UI and Colors changing randomly.</div>
-      </div>
+    </div>
     <div class="log-entry">
       <div class="log-date">December 24, 2024</div>
       <div class="log-details">Added a new update log page with cool particle effects and matching styles for a cohesive look.</div>
@@ -153,12 +197,13 @@
   </div>
 
   <footer>
-    <a href="">Back to Main</a>
+    <a href="index.html">Back to Main</a>
   </footer>
 
   <script>
     const canvas = document.getElementById('bgCanvas');
     const ctx = canvas.getContext('2d');
+    let isDarkMode = true; // Initial theme is dark
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
@@ -199,7 +244,8 @@
         const size = Math.random() * 3 + 2;
         const x = Math.random() * window.innerWidth;
         const y = Math.random() * window.innerHeight;
-        const color = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.7)`;
+        const alpha = isDarkMode ? 0.7 : 0.5; // Lower opacity for light theme
+        const color = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, ${alpha})`;
         const velocity = {
           x: (Math.random() - 0.5) * 2,
           y: (Math.random() - 0.5) * 2,
@@ -218,6 +264,15 @@
 
       requestAnimationFrame(animate);
     }
+
+    function toggleTheme() {
+      isDarkMode = !isDarkMode;
+      document.body.classList.toggle('beige-theme', !isDarkMode);
+      particles.length = 0; // Clear existing particles
+      createParticles(); // Create new particles with appropriate opacity
+    }
+
+    document.addEventListener('click', toggleTheme);
 
     createParticles();
     animate();
